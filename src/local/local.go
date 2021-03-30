@@ -72,9 +72,9 @@ func TestProject(projectPath string, configName string) {
 		}
 	}
 
-	_, err = util.ExecuteScript(suite.InitScript)
+	out, err := util.ExecuteScript(suite.InitScript)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err, out)
 	}
 
 	taskResults := make([]task.TaskResult, 0)

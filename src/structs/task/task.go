@@ -11,6 +11,7 @@ import (
 
 type Task struct {
 	Name         string  `yaml:"name"`
+	InitScript   string  `yaml:"initScript"`
 	TestScript   string  `yaml:"testScript"`
 	MemoryScript string  `yaml:"memoryScript"`
 	MemoryPoints float64 `yaml:"memoryPoints"`
