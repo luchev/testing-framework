@@ -1,0 +1,5 @@
+uploadDirPath: uploads
+configDirPath: config
+vars:
+  - PROJECT_DIR
+  - CONFIG_DIR
