@@ -38,7 +38,7 @@ func initFlags() {
 }
 
 func initSettings() {
-	err := util.UnmarshalYamlFile(baseConfigPath, &Settings)
+	err := util.UnmarshalYamlFile(baseConfigPath, &Settings, nil)
 	if err != nil {
 		log.Fatal(err)
 	}

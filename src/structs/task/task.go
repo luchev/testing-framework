@@ -5,7 +5,6 @@ import (
 	"os/exec"
 
 	"github.com/joshdk/go-junit"
-	"github.com/luchev/dtf/structs/error"
 	"github.com/luchev/dtf/structs/test"
 )
 
@@ -17,30 +16,17 @@ type Task struct {
 	MemoryPoints float64 `yaml:"memoryPoints"`
 }
 
-func (t *Task) RunTestScript() (result TaskResult) {
+func (t *Task) RunTestScript() []test.TestResult {
 	cmd := exec.Command("bash", "-c", t.TestScript)
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 
-	err := cmd.Run()
-	if stdout.Len() == 0 {
-		result.PassingBuild = false
-		result.BuildMessage = stderr.String()
-		result.Errors = append(result.Errors, error.Error{Name: "Build error", Details: "Build failed"})
-		return
-	}
+	cmd.Run()
 
-	suites, err := junit.Ingest(stdout.Bytes())
-	if err != nil {
-		result.PassingBuild = false
-		result.Errors = append(result.Errors, error.Error{Name: "Build error", Details: err.Error()})
-	} else {
-		result.PassingBuild = true
-		result.Tests, result.Points = test.ParseJunitTests(suites)
-	}
-	return
+	suites, _ := junit.Ingest(stdout.Bytes())
+	return test.ParseJunitTests(suites)
 }
 
 func (t *Task) HasMemoryLeak() bool {
@@ -53,5 +39,18 @@ func (t *Task) HasMemoryLeak() bool {
 		return false
 	} else {
 		return true
+	}
+}
+
+func (t *Task) MemoryLeakTest() test.TestResult {
+	cmd := exec.Command("bash", "-c", t.MemoryScript)
+	var stdout bytes.Buffer
+	cmd.Stdout = &stdout
+
+	err := cmd.Run()
+	if err == nil {
+		return test.TestResult{"Memory leak test", true, "", t.MemoryPoints}
+	} else {
+		return test.TestResult{"Memory leak test", false, "Memory leak detected", 0}
 	}
 }

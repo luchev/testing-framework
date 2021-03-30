@@ -146,17 +146,20 @@ func InitWorkspace(uploadDir string) {
 	}
 }
 
-func UnmarshalYamlFile(path string, out interface{}) error {
+func UnmarshalYamlFile(path string, out interface{}, varMap map[string]string) error {
 	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-	bytes, err := io.ReadAll(file)
+	readBytes, err := io.ReadAll(file)
+	for variable, value := range varMap {
+		readBytes = bytes.ReplaceAll(readBytes, []byte(variable), []byte(value))
+	}
 	if err != nil {
 		return err
 	}
 
-	err = yaml.Unmarshal(bytes, out)
+	err = yaml.Unmarshal(readBytes, out)
 	if err != nil {
 		return err
 	}

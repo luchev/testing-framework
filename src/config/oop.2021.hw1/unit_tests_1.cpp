@@ -1,12 +1,6 @@
-//
-// Created by lyubo on 11.03.21 г..
-//
-
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
-#include <pollyfills.hpp>
+#include <VendingMachine.hpp>
 #include <catch.hpp>
 #include <drink.hpp>
-#include <VendingMachine.hpp>
 
 TEST_CASE("Drink test:0.2", "[drink]") {
     Drink instance("some drink", 100, 0.5, 1.60);
@@ -40,7 +34,6 @@ TEST_CASE("Drink copy/operator= test:0.2", "[drink]") {
     REQUIRE(strcmp(second.get_name(), "the new drink") == 0);
     REQUIRE(strcmp(third.get_name(), "the zoomer drink") == 0);
 }
-
 
 TEST_CASE("Vending machine - add drink:0.2", "[vending machine]") {
     VendingMachine instance;
@@ -84,10 +77,10 @@ TEST_CASE("Vending machine - get income:0.2", "[vending machine]") {
     REQUIRE(instance.get_income() == 2.10);
 
     instance.buy_drink("water", 0.80);
-    REQUIRE(instance.get_income() - 2.90 < 0.001); // Double comparison error
+    REQUIRE(instance.get_income() - 2.90 < 0.001);  // Double comparison error
 
     instance.buy_drink("water", 0.30);
-    REQUIRE(instance.get_income() - 2.90 < 0.001); // Double comparison error
+    REQUIRE(instance.get_income() - 2.90 < 0.001);  // Double comparison error
 }
 
 TEST_CASE("Vending machine - copy/operator= tests:0.2", "[vending machine]") {

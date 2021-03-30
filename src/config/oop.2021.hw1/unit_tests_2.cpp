@@ -1,6 +1,4 @@
-#define CATCH_CONFIG_MAIN
 #include <cstring>
-#include <pollyfills.hpp>
 #include <set>
 #include <string>
 #include <vector>

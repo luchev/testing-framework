@@ -27,7 +27,7 @@ type TestResult struct {
 	Points  float64
 }
 
-func ParseJunitTests(suites []junit.Suite) (testResults []TestResult, allPoints float64) {
+func ParseJunitTests(suites []junit.Suite) (testResults []TestResult) {
 	for _, suite := range suites {
 		for _, test := range suite.Tests {
 			nameAndPoints := strings.Split(test.Name, ":")
@@ -43,8 +43,6 @@ func ParseJunitTests(suites []junit.Suite) (testResults []TestResult, allPoints 
 				result.Passing = false
 				result.Err = test.Error.Error()
 				result.Points = 0
-			} else {
-				allPoints += points
 			}
 
 			testResults = append(testResults, result)

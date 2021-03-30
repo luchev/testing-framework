@@ -1,2 +1,4 @@
 catch.hpp
 data/
+uploads/
+*.o

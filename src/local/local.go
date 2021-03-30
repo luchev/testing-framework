@@ -9,9 +9,7 @@ import (
 	"strings"
 
 	"github.com/luchev/dtf/consts"
-	"github.com/luchev/dtf/structs/error"
 	"github.com/luchev/dtf/structs/task"
-	"github.com/luchev/dtf/structs/test"
 	"github.com/luchev/dtf/util"
 )
 
@@ -28,16 +26,20 @@ type TestSuiteResult struct {
 
 func TestProject(projectPath string, configName string) {
 	suite := SuiteConfig{}
-	err := util.UnmarshalYamlFile(configName, &suite)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	tempDir, fileName, err := util.RetrieveLocalFile(projectPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	// defer os.RemoveAll(tempDir)
+
+	varMap := make(map[string]string)
+	varMap["${PROJECT_DIR}"], _ = filepath.Abs(tempDir)
+	varMap["${CONFIG_DIR}"], _ = filepath.Abs(filepath.Dir(configName))
+	err = util.UnmarshalYamlFile(configName, &suite, varMap)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	studentId := filepath.Base(projectPath)
 	studentIdRegexFind := regexp.MustCompile(suite.StudentIdRegex).FindSubmatch([]byte(projectPath))
@@ -50,28 +52,6 @@ func TestProject(projectPath string, configName string) {
 		log.Fatalf("Error extracting file %s: %s", filepath.Join(tempDir, fileName), err.Error())
 	}
 
-	for _, variable := range consts.Settings.Vars {
-		if variable == "PROJECT_DIR" {
-			suite.InitScript = strings.ReplaceAll(suite.InitScript, "${PROJECT_DIR}", tempDir)
-		}
-		if variable == "CONFIG_DIR" {
-			suite.InitScript = strings.ReplaceAll(suite.InitScript, "${CONFIG_DIR}", filepath.Dir(configName))
-		}
-	}
-
-	for index := 0; index < len(suite.Tasks); index += 1 {
-		for _, variable := range consts.Settings.Vars {
-			if variable == "PROJECT_DIR" {
-				suite.Tasks[index].TestScript = strings.ReplaceAll(suite.Tasks[index].TestScript, "${"+variable+"}", tempDir)
-				suite.Tasks[index].MemoryScript = strings.ReplaceAll(suite.Tasks[index].MemoryScript, "${"+variable+"}", tempDir)
-			}
-			if variable == "CONFIG_DIR" {
-				suite.Tasks[index].TestScript = strings.ReplaceAll(suite.Tasks[index].TestScript, "${"+variable+"}", filepath.Dir(configName))
-				suite.Tasks[index].MemoryScript = strings.ReplaceAll(suite.Tasks[index].MemoryScript, "${"+variable+"}", filepath.Dir(configName))
-			}
-		}
-	}
-
 	out, err := util.ExecuteScript(suite.InitScript)
 	if err != nil {
 		log.Fatal(err, out)
@@ -79,26 +59,21 @@ func TestProject(projectPath string, configName string) {
 
 	taskResults := make([]task.TaskResult, 0)
 	for _, suiteTask := range suite.Tasks {
-		result := suiteTask.RunTestScript()
-		result.Name = suiteTask.Name
-		if !suiteTask.HasMemoryLeak() && result.PassingBuild {
-			result.Points += suiteTask.MemoryPoints
-			result.Tests = append(result.Tests, test.TestResult{
-				Name:    "Memory leak test",
-				Passing: true,
-				Err:     "",
-				Points:  suiteTask.MemoryPoints,
-			})
-		} else {
-			result.Errors = append(result.Errors, error.Error{Name: "Memory leak detected", Details: ""})
-			result.Tests = append(result.Tests, test.TestResult{
-				Name:    "Memory leak test",
-				Passing: false,
-				Err:     "",
-				Points:  0,
-			})
+		result := task.TaskResult{suiteTask.Name, true, "", nil, nil, 0}
+		out, err := util.ExecuteScript(suiteTask.InitScript)
+		if err != nil {
+			result.PassingBuild = false
+			result.BuildMessage = out
+			taskResults = append(taskResults, result)
+			continue
 		}
 
+		testResults := suiteTask.RunTestScript()
+		result.Tests = append(result.Tests, testResults...)
+		result.Tests = append(result.Tests, suiteTask.MemoryLeakTest())
+		for _, t := range result.Tests {
+			result.Points += t.Points
+		}
 		taskResults = append(taskResults, result)
 	}
 
