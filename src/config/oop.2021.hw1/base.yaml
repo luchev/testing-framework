@@ -1,5 +1,7 @@
 initScript: "
     cd ${CONFIG_DIR};
+    if [ $? -ne 0 ]; then exit 1; fi;
+
     if ! test -f 'catch.hpp' ; then
         wget https://github.com/catchorg/Catch2/releases/download/v2.13.4/catch.hpp;
     fi;
@@ -14,6 +16,7 @@ tasks:
     initScript: "
       cd ${PROJECT_DIR}/1/;
       if [ $? -ne 0 ]; then exit 1; fi;
+      
       grep -Prl '^\\s*(int|void)\\s*main\\(.*\\)' . | xargs rm;
       for sourceFile in $(find . -type f); do
         sed -i 's/^.*<crtdbg.h>//g' $sourceFile;
@@ -26,14 +29,14 @@ tasks:
       ${PROJECT_DIR}/units_tests_1 -r junit;
     "
     memoryScript: "
-      cd ${PROJECT_DIR}/1/;
-      ! valgrind ./units 2>&1 | grep 'LEAK SUMMARY';
+      valgrind ${PROJECT_DIR}/units_tests_1;
     "
     memoryPoints: 0.8
   - name: "2"
     initScript: "
       cd ${PROJECT_DIR}/2/;
       if [ $? -ne 0 ]; then exit 1; fi;
+
       grep -Prl '^\\s*(int|void)\\s*main\\(.*\\)' . | xargs rm;
       for sourceFile in $(find . -type f); do
         sed -i 's/^.*<crtdbg.h>//g' $sourceFile;
@@ -46,7 +49,6 @@ tasks:
       ${PROJECT_DIR}/units_tests_2 -r junit;
     "
     memoryScript: "
-      cd ${PROJECT_DIR}/2/;
-      ! valgrind ./units 2>&1 | grep 'LEAK SUMMARY';
+      valgrind {PROJECT_DIR}/units_tests_2;
     "
     memoryPoints: 1.2
