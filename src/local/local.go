@@ -59,7 +59,7 @@ func TestProject(projectPath string, configName string) {
 
 	taskResults := make([]task.TaskResult, 0)
 	for _, suiteTask := range suite.Tasks {
-		result := task.TaskResult{suiteTask.Name, true, "", nil, nil, 0}
+		result := task.TaskResult{Name: suiteTask.Name, PassingBuild: true, BuildMessage: "", Errors: nil, Tests: nil, Points: 0}
 		out, err := util.ExecuteScript(suiteTask.InitScript)
 		if err != nil {
 			result.PassingBuild = false
