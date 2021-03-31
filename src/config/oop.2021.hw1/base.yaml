@@ -14,13 +14,16 @@ tasks:
     initScript: "
       cd ${PROJECT_DIR}/1/;
       grep -Prl '^\\s*(int|void)\\s*main\\(.*\\)' . | xargs rm;
-      find . -type f | xargs sed -i 's/^.*<crtdbg.h>//g';
-      cp ${CONFIG_DIR}/unit_tests_1.cpp ${CONFIG_DIR}/catch_main.o ${CONFIG_DIR}/catch.hpp .;
-      g++ -std=c++20 -I . catch_main.o *.cpp -o units;
+      echo ${PROJECT_DIR} > /tmp/123;
+      for sourceFile in $(find . -type f); do
+        sed -i 's/^.*<crtdbg.h>//g' $sourceFile;
+        sed -i '1i #include <pollyfills.hpp>\n' $sourceFile;
+      done;
+      cp ${CONFIG_DIR}/unit_tests_1.cpp ${CONFIG_DIR}/pollyfills.* ${CONFIG_DIR}/catch_main.o ${CONFIG_DIR}/catch.hpp .;
+      g++ -std=c++20 -I . catch_main.o *.cpp -o ${PROJECT_DIR}/units_tests_1;
     "
     testScript: "
-      cd ${PROJECT_DIR}/1/;
-      ./units -r junit;
+      ${PROJECT_DIR}/units_tests_1 -r junit;
     "
     memoryScript: "
       cd ${PROJECT_DIR}/1/;
@@ -31,13 +34,15 @@ tasks:
     initScript: "
       cd ${PROJECT_DIR}/2/;
       grep -Prl '^\\s*(int|void)\\s*main\\(.*\\)' . | xargs rm;
-      find . -type f | xargs sed -i 's/^.*<crtdbg.h>//g';
-      cp ${CONFIG_DIR}/unit_tests_2.cpp ${CONFIG_DIR}/catch_main.o ${CONFIG_DIR}/catch.hpp .;
-      g++ -std=c++20 -I . catch_main.o *.cpp -o units;
+      for sourceFile in $(find . -type f); do
+        sed -i 's/^.*<crtdbg.h>//g' $sourceFile;
+        sed -i '1i #include <pollyfills.hpp>\n' $sourceFile;
+      done;
+      cp ${CONFIG_DIR}/unit_tests_2.cpp ${CONFIG_DIR}/pollyfills.* ${CONFIG_DIR}/catch_main.o ${CONFIG_DIR}/catch.hpp .;
+      g++ -std=c++20 -I . catch_main.o *.cpp -o ${PROJECT_DIR}/units_tests_2;
     "
     testScript: "
-      cd ${PROJECT_DIR}/2/;
-      ./units -r junit;
+      ${PROJECT_DIR}/units_tests_2 -r junit;
     "
     memoryScript: "
       cd ${PROJECT_DIR}/2/;

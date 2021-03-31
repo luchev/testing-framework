@@ -1,6 +1,9 @@
+#include <bits/stdc++.h>
+
 #include <VendingMachine.hpp>
 #include <catch.hpp>
 #include <drink.hpp>
+#include <pollyfills.hpp>
 
 TEST_CASE("Drink test:0.2", "[drink]") {
     Drink instance("some drink", 100, 0.5, 1.60);

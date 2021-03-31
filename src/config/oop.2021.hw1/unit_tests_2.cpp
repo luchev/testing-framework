@@ -1,8 +1,7 @@
-#include <cstring>
-#include <set>
-#include <string>
-#include <vector>
-using namespace std;
+#include <bits/stdc++.h>
+
+#include <pollyfills.hpp>
+
 
 #include <Error.hpp>
 #include <TestCase.hpp>
@@ -91,7 +90,7 @@ TEST_CASE("Error operator=:0.1") {
 }
 
 TEST_CASE("Error small static char[]:0.1") {
-    string str;
+    std::string str;
     for (int i = 0; i < 424242; i++) {
         str.push_back('a');
     }
@@ -101,7 +100,7 @@ TEST_CASE("Error small static char[]:0.1") {
 }
 
 TEST_CASE("TestCase getName():0.1") {
-    string name = "xXx_name69_xXx";
+    std::string name = "xXx_name69_xXx";
     TestCase x = TestCase(name, Error::newNone());
     REQUIRE(name == x.getName());
 }
@@ -130,18 +129,18 @@ TEST_CASE("TestCase getErrorType():0.1") {
 }
 
 TEST_CASE("TestCase getErrorMessage():0.1") {
-    string msg = "__message__";
+    std::string msg = "__message__";
     Error build = Error::newBuildFailed(msg.c_str());
     REQUIRE(TestCase("", Error::newBuildFailed(msg.c_str())).getErrorMessage() == msg);
-    REQUIRE(TestCase("", Error::newNone()).getErrorMessage() == string(""));
+    REQUIRE(TestCase("", Error::newNone()).getErrorMessage() == std::string(""));
 }
 
 TEST_CASE("TestSuit get/setName():0.1") {
     TestSuite suite("suite221");
-    REQUIRE(suite.getName() == string("suite221"));
+    REQUIRE(suite.getName() == std::string("suite221"));
 
     suite.setName("Suite774447");
-    REQUIRE(suite.getName() == string("Suite774447"));
+    REQUIRE(suite.getName() == std::string("Suite774447"));
 }
 
 TEST_CASE("TestSuit filterPassing():0.1") {
@@ -185,11 +184,11 @@ TEST_CASE("TestSuit filterByErrorType() None:0.1") {
     auto noneErrors = suite.filterByErrorType(ErrorType::None);
     REQUIRE(noneErrors.size() == 2);
 
-    set<string> namesExpected;
+    std::set<std::string> namesExpected;
     namesExpected.insert("none");
     namesExpected.insert("none2");
 
-    set<string> namesActual;
+    std::set<std::string> namesActual;
     for (auto& x : noneErrors) {
         namesActual.insert(x.getName());
     }
@@ -210,11 +209,11 @@ TEST_CASE("TestSuit filterByErrorType() FailedAssertion:0.1") {
     auto failedAssert = suite.filterByErrorType(ErrorType::FailedAssertion);
     REQUIRE(failedAssert.size() == 2);
 
-    set<string> namesExpected;
+    std::set<std::string> namesExpected;
     namesExpected.insert("failed11");
     namesExpected.insert("failed22");
 
-    set<string> namesActual;
+    std::set<std::string> namesActual;
     for (auto& x : failedAssert) {
         namesActual.insert(x.getName());
     }
