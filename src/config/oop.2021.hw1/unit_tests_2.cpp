@@ -1,12 +1,10 @@
 #include <bits/stdc++.h>
 
-#include <pollyfills.hpp>
-
-
 #include <Error.hpp>
 #include <TestCase.hpp>
 #include <TestSuite.hpp>
 #include <catch.hpp>
+#include <pollyfills.hpp>
 
 TEST_CASE("Error::getType():0.1") {
     Error none = Error::newNone();
