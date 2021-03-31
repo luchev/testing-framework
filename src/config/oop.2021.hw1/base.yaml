@@ -13,8 +13,8 @@ tasks:
   - name: "1"
     initScript: "
       cd ${PROJECT_DIR}/1/;
+      if [ $? -ne 0 ]; then exit 1; fi;
       grep -Prl '^\\s*(int|void)\\s*main\\(.*\\)' . | xargs rm;
-      echo ${PROJECT_DIR} > /tmp/123;
       for sourceFile in $(find . -type f); do
         sed -i 's/^.*<crtdbg.h>//g' $sourceFile;
         sed -i '1i #include <pollyfills.hpp>\n' $sourceFile;
@@ -33,6 +33,7 @@ tasks:
   - name: "2"
     initScript: "
       cd ${PROJECT_DIR}/2/;
+      if [ $? -ne 0 ]; then exit 1; fi;
       grep -Prl '^\\s*(int|void)\\s*main\\(.*\\)' . | xargs rm;
       for sourceFile in $(find . -type f); do
         sed -i 's/^.*<crtdbg.h>//g' $sourceFile;
