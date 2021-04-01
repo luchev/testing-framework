@@ -24,13 +24,13 @@ tasks:
         sed -i '1i #include <pollyfills.hpp>\n' $sourceFile;
       done;
       cp ${CONFIG_DIR}/unit_tests_1.cpp ${CONFIG_DIR}/pollyfills.* ${CONFIG_DIR}/catch_main.o ${CONFIG_DIR}/catch.hpp .;
-      g++ -std=c++20 -I . catch_main.o *.cpp -o ${PROJECT_DIR}/units_tests_1;
+      g++ -std=c++20 -I . catch_main.o *.cpp -o ${PROJECT_DIR}/unit_tests_1;
     "
     testScript: "
-      ${PROJECT_DIR}/units_tests_1 -r junit;
+      ${PROJECT_DIR}/unit_tests_1 -r junit;
     "
     memoryScript: "
-      valgrind ${PROJECT_DIR}/units_tests_1;
+      ! valgrind ${PROJECT_DIR}/unit_tests_1 2>&1 | grep 'LEAK SUMMARY';
     "
     memoryPoints: 0.8
   - name: "2"
@@ -44,12 +44,12 @@ tasks:
         sed -i '1i #include <pollyfills.hpp>\n' $sourceFile;
       done;
       cp ${CONFIG_DIR}/unit_tests_2.cpp ${CONFIG_DIR}/pollyfills.* ${CONFIG_DIR}/catch_main.o ${CONFIG_DIR}/catch.hpp .;
-      g++ -std=c++20 -I . catch_main.o *.cpp -o ${PROJECT_DIR}/units_tests_2;
+      g++ -std=c++20 -I . catch_main.o *.cpp -o ${PROJECT_DIR}/unit_tests_2;
     "
     testScript: "
-      ${PROJECT_DIR}/units_tests_2 -r junit;
+      ${PROJECT_DIR}/unit_tests_2 -r junit;
     "
     memoryScript: "
-      valgrind {PROJECT_DIR}/units_tests_2;
+      ! valgrind ${PROJECT_DIR}/unit_tests_2 2>&1 | grep 'LEAK SUMMARY';
     "
     memoryPoints: 1.2
