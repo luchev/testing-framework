@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -25,24 +26,24 @@ type TestSuiteResult struct {
 }
 
 func TestProject(projectPath string, configName string) {
-	suite := SuiteConfig{}
+	suiteConfig := SuiteConfig{}
 
 	tempDir, fileName, err := util.RetrieveLocalFile(projectPath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// defer os.RemoveAll(tempDir)
+	defer os.RemoveAll(tempDir)
 
 	varMap := make(map[string]string)
 	varMap["${PROJECT_DIR}"], _ = filepath.Abs(tempDir)
 	varMap["${CONFIG_DIR}"], _ = filepath.Abs(filepath.Dir(configName))
-	err = util.UnmarshalYamlFile(configName, &suite, varMap)
+	err = util.UnmarshalYamlFile(configName, &suiteConfig, varMap)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	studentId := filepath.Base(projectPath)
-	studentIdRegexFind := regexp.MustCompile(suite.StudentIdRegex).FindSubmatch([]byte(projectPath))
+	studentIdRegexFind := regexp.MustCompile(suiteConfig.StudentIdRegex).FindSubmatch([]byte(projectPath))
 	if len(studentIdRegexFind) == 2 {
 		studentId = string(studentIdRegexFind[1])
 	}
@@ -52,13 +53,13 @@ func TestProject(projectPath string, configName string) {
 		log.Fatalf("Error extracting file %s: %s", filepath.Join(tempDir, fileName), err.Error())
 	}
 
-	out, err := util.ExecuteScript(suite.InitScript)
+	out, err := util.ExecuteScript(suiteConfig.InitScript)
 	if err != nil {
 		log.Fatal(err, out)
 	}
 
 	taskResults := make([]task.TaskResult, 0)
-	for _, suiteTask := range suite.Tasks {
+	for _, suiteTask := range suiteConfig.Tasks {
 		result := task.TaskResult{Name: suiteTask.Name, PassingBuild: true, BuildMessage: "", Errors: nil, Tests: nil, Points: 0}
 		out, err := util.ExecuteScript(suiteTask.InitScript)
 		if err != nil {
@@ -79,16 +80,49 @@ func TestProject(projectPath string, configName string) {
 
 	suiteResult := TestSuiteResult{StudentId: studentId, Results: taskResults}
 
+	outputTestSuiteResult(suiteResult, suiteConfig)
+}
+
+func outputTestSuiteResult(result TestSuiteResult, config SuiteConfig) {
 	if consts.Flags.OutFormat == "json" {
-		out, _ := json.MarshalIndent(suiteResult, "", "    ")
-		fmt.Printf("%s", string(out))
+		fmt.Println(outputJson(result, config))
 	} else if consts.Flags.OutFormat == "csv" {
-		points := make([]string, 0)
-		for _, t := range suiteResult.Results {
-			points = append(points, fmt.Sprintf("%.2f", t.Points))
-		}
-		fmt.Printf("%s,%s\n", suiteResult.StudentId, strings.Join(points, ","))
+		fmt.Println(outputCsv(result, config))
 	} else {
 		fmt.Println("Wrong output type, specify json or csv")
 	}
+}
+
+func outputJson(result TestSuiteResult, config SuiteConfig) string {
+	out, _ := json.MarshalIndent(result, "", "    ")
+	return string(out)
+}
+
+type CsvResult struct {
+	memory float64
+	total  float64
+}
+
+func outputCsv(result TestSuiteResult, config SuiteConfig) string {
+	resMap := make(map[string]CsvResult)
+	for _, res := range result.Results {
+		if len(res.Tests) > 0 {
+			memoryPoints := res.Tests[len(res.Tests)-1].Points
+			remainingPoints := res.Points - memoryPoints
+			resMap[res.Name] = CsvResult{memoryPoints, remainingPoints}
+		}
+	}
+
+	csvOutput := make([]string, 0)
+	for _, t := range config.Tasks {
+		res, ok := resMap[t.Name]
+		if ok {
+			csvOutput = append(csvOutput,
+				fmt.Sprintf("%.2f", res.memory), fmt.Sprintf("%.2f", res.total))
+		} else {
+			csvOutput = append(csvOutput, "0", "0")
+		}
+	}
+
+	return fmt.Sprintf("%s,%s", result.StudentId, strings.Join(csvOutput, ","))
 }
