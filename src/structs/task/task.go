@@ -3,6 +3,7 @@ package task
 import (
 	"bytes"
 	"os/exec"
+	"time"
 
 	"github.com/joshdk/go-junit"
 	"github.com/luchev/dtf/structs/test"
@@ -17,40 +18,49 @@ type Task struct {
 }
 
 func (t *Task) RunTestScript() []test.TestResult {
-	cmd := exec.Command("bash", "-c", t.TestScript)
-	var stdout bytes.Buffer
-	cmd.Stdout = &stdout
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
+	c1 := make(chan []test.TestResult, 1)
+	go func() {
+		cmd := exec.Command("bash", "-c", t.TestScript)
+		var stdout bytes.Buffer
+		cmd.Stdout = &stdout
+		var stderr bytes.Buffer
+		cmd.Stderr = &stderr
 
-	cmd.Run()
+		cmd.Run()
 
-	suites, _ := junit.Ingest(stdout.Bytes())
-	return test.ParseJunitTests(suites)
-}
+		suites, _ := junit.Ingest(stdout.Bytes())
+		c1 <- test.ParseJunitTests(suites)
+	}()
 
-func (t *Task) HasMemoryLeak() bool {
-	cmd := exec.Command("bash", "-c", t.MemoryScript)
-	var stdout bytes.Buffer
-	cmd.Stdout = &stdout
-
-	err := cmd.Run()
-	if err == nil {
-		return false
-	} else {
-		return true
+	select {
+	case res := <-c1:
+		return res
+	case <-time.After(1 * time.Minute):
+		return []test.TestResult{
+			{"Execution timed out", false, "Program execution timed out", 0},
+		}
 	}
 }
 
 func (t *Task) MemoryLeakTest() test.TestResult {
-	cmd := exec.Command("bash", "-c", t.MemoryScript)
-	var stdout bytes.Buffer
-	cmd.Stdout = &stdout
+	c1 := make(chan test.TestResult, 1)
+	go func() {
+		cmd := exec.Command("bash", "-c", t.MemoryScript)
+		var stdout bytes.Buffer
+		cmd.Stdout = &stdout
 
-	err := cmd.Run()
-	if err == nil {
-		return test.TestResult{"Memory leak test", true, "", t.MemoryPoints}
-	} else {
-		return test.TestResult{"Memory leak test", false, "Memory leak detected", 0}
+		err := cmd.Run()
+		if err == nil {
+			c1 <- test.TestResult{"Memory leak test", true, "", t.MemoryPoints}
+		} else {
+			c1 <- test.TestResult{"Memory leak test", false, "Memory leak detected", 0}
+		}
+	}()
+
+	select {
+	case res := <-c1:
+		return res
+	case <-time.After(1 * time.Minute):
+		return test.TestResult{"Memory leak test", false, "Program execution timed out", 0}
 	}
 }
