@@ -10,7 +10,8 @@ initScript: "
         g++ -std=c++20 -c -I . catch_main.cpp -o catch_main.o;
     fi;
   "
-studentIdRegex: .*?(\d+)\.zip
+studentIdRegex: .*?(?P<group>\d+)_(?P<fn>\d+)\.zip
+studentIdOutputFormat: group,fn
 tasks:
   - name: "1"
     initScript: "

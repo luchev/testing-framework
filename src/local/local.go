@@ -15,13 +15,14 @@ import (
 )
 
 type SuiteConfig struct {
-	InitScript     string      `yaml:"initScript"`
-	Tasks          []task.Task `yaml:"tasks"`
-	StudentIdRegex string      `yaml:"studentIdRegex"`
+	InitScript            string      `yaml:"initScript"`
+	Tasks                 []task.Task `yaml:"tasks"`
+	StudentIdRegex        string      `yaml:"studentIdRegex"`
+	StudentIdOutputFormat string      `yaml:"studentIdOutputFormat"`
 }
 
 type TestSuiteResult struct {
-	StudentId string
+	StudentId map[string]string
 	Results   []task.TaskResult
 }
 
@@ -43,9 +44,13 @@ func TestProject(projectPath string, configName string) {
 	}
 
 	studentId := filepath.Base(projectPath)
-	studentIdRegexFind := regexp.MustCompile(suiteConfig.StudentIdRegex).FindSubmatch([]byte(projectPath))
-	if len(studentIdRegexFind) == 2 {
-		studentId = string(studentIdRegexFind[1])
+	studentIdRegex := regexp.MustCompile(suiteConfig.StudentIdRegex)
+	match := studentIdRegex.FindStringSubmatch(studentId)
+	studentIdMap := make(map[string]string)
+	for i, name := range studentIdRegex.SubexpNames() {
+		if i != 0 && name != "" {
+			studentIdMap[name] = match[i]
+		}
 	}
 
 	_, err = util.Unzip(filepath.Join(tempDir, fileName), tempDir)
@@ -78,7 +83,7 @@ func TestProject(projectPath string, configName string) {
 		taskResults = append(taskResults, result)
 	}
 
-	suiteResult := TestSuiteResult{StudentId: studentId, Results: taskResults}
+	suiteResult := TestSuiteResult{StudentId: studentIdMap, Results: taskResults}
 
 	outputTestSuiteResult(suiteResult, suiteConfig)
 }
@@ -124,5 +129,15 @@ func outputCsv(result TestSuiteResult, config SuiteConfig) string {
 		}
 	}
 
-	return fmt.Sprintf("%s,%s", result.StudentId, strings.Join(csvOutput, ","))
+	id := strings.Split(config.StudentIdOutputFormat, ",")
+	for index, identifier := range id {
+		value, ok := result.StudentId[identifier]
+		if ok {
+			id[index] = value
+		} else {
+			id[index] = "UNDEFINED"
+		}
+	}
+
+	return fmt.Sprintf("%s,%s", strings.Join(id, ","), strings.Join(csvOutput, ","))
 }
