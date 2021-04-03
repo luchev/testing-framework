@@ -23,7 +23,7 @@ import (
 type TestResult struct {
 	Name    string
 	Passing bool
-	Err     string
+	Err     Error
 	Points  float64
 }
 
@@ -38,10 +38,10 @@ func ParseJunitTests(suites []junit.Suite) (testResults []TestResult) {
 				points, _ = strconv.ParseFloat(nameAndPoints[len(nameAndPoints)-1], 64)
 			}
 
-			result := TestResult{Name: name, Passing: true, Err: "", Points: points}
+			result := TestResult{Name: name, Passing: true, Err: Error{}, Points: points}
 			if test.Error != nil {
 				result.Passing = false
-				result.Err = test.Error.Error()
+				result.Err.Name = test.Error.Error()
 				result.Points = 0
 			}
 
@@ -59,7 +59,7 @@ func RunTests(names []string, srcDir string) (results []TestResult) {
 			res = TestResult{
 				Name:    test,
 				Passing: false,
-				Err:     fmt.Sprintf("Failed to run %s with err: %s", test, err.Error()),
+				Err:     Error{Name: fmt.Sprintf("Failed to run %s with err: %s", test, err.Error())},
 				Points:  0,
 			}
 			log.Printf("Failed to run %s: %s", test, err.Error())
@@ -86,10 +86,10 @@ func RunTest(srcDir string, testName string) (result TestResult, err error) {
 	// Should have exactly 1 test
 	for _, suite := range suites {
 		for _, test := range suite.Tests {
-			result = TestResult{Name: test.Name, Passing: true, Err: "", Points: 0}
+			result = TestResult{Name: test.Name, Passing: true, Err: Error{}, Points: 0}
 			if test.Error != nil {
 				result.Passing = false
-				result.Err = test.Error.Error()
+				result.Err.Name = test.Error.Error()
 			}
 		}
 	}
@@ -114,7 +114,7 @@ func RunTestsRemotely(names []string, codeArchivePath string, worker string) (re
 	}
 	io.WriteString(testListWriter, strings.Join(names, ","))
 
-	formFile, err := writer.CreateFormFile("codeZip", filepath.Base(srcArchive.Name()))
+	formFile, err := writer.CreateFormFile("srcFile", filepath.Base(srcArchive.Name()))
 	if err != nil {
 		return nil, err
 	}

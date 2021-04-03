@@ -1,7 +1,6 @@
 package task
 
 import (
-	"github.com/luchev/dtf/structs/error"
 	"github.com/luchev/dtf/structs/test"
 )
 
@@ -10,7 +9,7 @@ type TaskResult struct {
 	Name         string
 	PassingBuild bool
 	BuildMessage string
-	Errors       []error.Error
+	Errors       []test.Error
 	Tests        []test.TestResult
 	Points       float64
 }

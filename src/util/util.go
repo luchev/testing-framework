@@ -3,10 +3,12 @@ package util
 import (
 	"archive/zip"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -165,4 +167,36 @@ func UnmarshalYamlFile(path string, out interface{}, varMap map[string]string) e
 	}
 
 	return nil
+}
+
+func EscapeNewLineHTML(input string) string {
+	return strings.Replace(input, "\n", "<br>", -1)
+}
+
+func RetrieveFile(request *http.Request, fieldName string) (string, string, error) {
+	file, handle, err := request.FormFile(fieldName)
+	if err != nil {
+		return "", "", errors.New("No file provided")
+	}
+	fileName := handle.Filename
+
+	defer file.Close()
+	tempDir, err := ioutil.TempDir("uploads", "")
+	if err != nil {
+		return "", "", err
+	}
+
+	archiveFile, err := os.OpenFile(tempDir+"/"+fileName, os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	uploadedBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		return "", "", nil
+	}
+
+	archiveFile.Write(uploadedBytes)
+
+	return tempDir, fileName, nil
 }

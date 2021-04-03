@@ -95,6 +95,7 @@
         {{end}}
 
         {{range .Tasks}}
+            <h2>Task: {{.Name}}</h2>
           {{if .PassingBuild}}
             <h3>
               <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" />
@@ -160,11 +161,12 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
     integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
     crossorigin="anonymous"></script>
-  <script>
+  <script defer>
     var coll = document.getElementsByClassName( "collapsible" );
     var i;
     for ( i = 0; i < coll.length; i++ ) {
       coll[i].addEventListener( "click", function () {
+        console.log(13);
         this.classList.toggle( "droppedDown" );
         var content = this.nextElementSibling;
         if ( content.style.maxHeight ) {
