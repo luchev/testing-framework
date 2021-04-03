@@ -29,7 +29,7 @@ func SetupRoutes(port int) {
 	router.HandleFunc("/", handleMasterIndex)
 	srv := http.Server{
 		Handler:      router,
-		Addr:         fmt.Sprintf("127.0.0.1:%d", port),
+		Addr:         fmt.Sprintf(":%d", port),
 		WriteTimeout: 150 * time.Second,
 		ReadTimeout:  300 * time.Second,
 	}

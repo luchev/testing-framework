@@ -32,7 +32,7 @@
         <h1 class="mt-5">C++ Automated testing</h1>
         <p></p>
           {{range .Configs}}
-            <form enctype="multipart/form-data" action="http://localhost:{{$.Port}}/test" method="post">
+            <form enctype="multipart/form-data" action="/test" method="post">
               <input type="file" name="srcFile" />
               <input type="submit" value="Test {{.Name}}" />
               <input type="hidden" name="config" value="{{.Config}}" />
