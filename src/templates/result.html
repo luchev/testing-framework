@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <title>C++ Automated testing</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <style>
+    .collapsible {
+      background-color: #777;
+      color: white;
+      cursor: pointer;
+      padding: 18px;
+      width: 100%;
+      border: none;
+      text-align: left;
+      outline: none;
+      font-size: 15px;
+    }
+
+    .droppedDown,
+    .collapsible:hover {
+      background-color: #555;
+    }
+
+    .collapsible:after {
+      content: '\002B';
+      color: white;
+      font-weight: bold;
+      float: right;
+      margin-left: 5px;
+    }
+
+    .droppedDown:after {
+      content: "\2212";
+    }
+
+    .dropDownContent {
+      padding: 0 18px !important;
+      margin: 0px 5px 0px 5px !important;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.2s ease-out;
+      background-color: #aaa;
+      text-align: left;
+    }
+
+    .dropDownContent>p {
+      margin-top: 18px;
+      margin-bottom: 18px;
+    }
+
+    img {
+      vertical-align: middle;
+    }
+
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark static-top">
+    <div class="container">
+      <a class="navbar-brand" href="/">C++ Automated testing</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
+        aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarResponsive">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/">Home</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12 text-center">
+        <h1>{{.PageTitle}}</h1>
+        {{if .Errors}}
+          {{range .Errors}}
+            <button type="button" class="collapsible">
+              <img src="https://img.shields.io/badge/-✘-red?style=for-the-badge" />
+              {{.Name}}
+            </button>
+            <div class="dropDownContent">
+              <p>
+                {{escapeNewLineHTML .Details}}
+              </p>
+            </div>
+          {{end}}
+        {{end}}
+
+        {{range .Tasks}}
+          {{if .PassingBuild}}
+            <h3>
+              <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" />
+            </h3>
+          {{else}}
+            <h3>
+              <img src="https://img.shields.io/badge/build-failing-red?style=for-the-badge" />
+            </h3>
+          {{end}}
+
+          <button type="button" class="collapsible">Build output</button>
+          <div class="dropDownContent">
+            <p>
+              {{escapeNewLineHTML .BuildMessage}}
+            </p>
+          </div>
+
+          {{if .Errors}}
+            <h3>Errors</h3>
+            {{range .Errors}}
+              <button type="button" class="collapsible">
+                <img src="https://img.shields.io/badge/-✔-brightgreen?style=for-the-badge" />
+                {{.Name}}
+              </button>
+              <div class="dropDownContent">
+                {{escapeNewLineHTML .Details}}
+              </div>
+            {{end}}
+          {{end}}
+
+          {{if .Tests}}
+            <h2>Tests</h2>
+            {{range .Tests}}
+              {{if .Passing}}
+                <button type="button" class="collapsible">
+                  <img src="https://img.shields.io/badge/-✔-brightgreen?style=for-the-badge" />
+                  {{.Name}}
+                </button>
+                <div class="dropDownContent"></div>
+              {{else}}
+                <button type="button" class="collapsible">
+                  <img src="https://img.shields.io/badge/-✘-red?style=for-the-badge" />
+                  {{.Name}}
+                </button>
+                <div class="dropDownContent">
+                  <p>
+                    {{escapeNewLineHTML .Err}}
+                  </p>
+                </div>
+              {{end}}
+            {{end}}
+          {{end}}
+        {{end}}
+      </div>
+    </div>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+    crossorigin="anonymous"></script>
+  <script>
+    var coll = document.getElementsByClassName( "collapsible" );
+    var i;
+    for ( i = 0; i < coll.length; i++ ) {
+      coll[i].addEventListener( "click", function () {
+        this.classList.toggle( "droppedDown" );
+        var content = this.nextElementSibling;
+        if ( content.style.maxHeight ) {
+          content.style.maxHeight = null;
+        } else {
+          content.style.maxHeight = content.scrollHeight + "px";
+        }
+      } );
+    }
+  </script>
