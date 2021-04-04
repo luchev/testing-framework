@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
@@ -14,7 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"github.com/luchev/dtf/consts"
 )
 
 func RetrieveLocalFile(path string) (string, string, error) {
@@ -23,7 +24,7 @@ func RetrieveLocalFile(path string) (string, string, error) {
 		return "", "", err
 	}
 
-	tempDir, err := ioutil.TempDir("uploads", "")
+	tempDir, err := ioutil.TempDir(consts.Settings.UploadsPath, "")
 	if err != nil {
 		return "", "", err
 	}
@@ -37,42 +38,37 @@ func RetrieveLocalFile(path string) (string, string, error) {
 	return tempDir, fileName, nil
 }
 
-func Unzip(src string, dest string) ([]string, error) {
+func Unzip(src string, dest string) error {
 	reader, err := zip.OpenReader(src)
 	if err != nil {
-		fmt.Println(err)
-		return nil, err
+		return fmt.Errorf("invalid zip archive: %s", filepath.Base(src))
 	}
 	defer reader.Close()
 
-	sourceFiles := make([]string, 0)
 	for _, file := range reader.File {
 		fpath := filepath.Join(dest, file.Name)
 
 		if !strings.HasPrefix(fpath, filepath.Clean(dest)+string(os.PathSeparator)) {
-			return sourceFiles, fmt.Errorf("%s: illegal file path", fpath)
+			return fmt.Errorf("illegal file name %s", file.Name)
 		}
+
 		if file.FileInfo().IsDir() {
 			os.MkdirAll(fpath, os.ModePerm)
 			continue
 		}
 
 		if err = os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
-			return sourceFiles, err
+			return fmt.Errorf("failed to create directory structure for %s", file.Name)
 		}
 
 		outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
 		if err != nil {
-			return sourceFiles, err
+			return fmt.Errorf("failed to create local file when extracting %s", file.Name)
 		}
 
 		inFile, err := file.Open()
 		if err != nil {
-			return sourceFiles, err
-		}
-
-		if filepath.Ext(file.Name) == ".rs" {
-			sourceFiles = append(sourceFiles, file.Name)
+			return fmt.Errorf("failed to open archived %s", file.Name)
 		}
 
 		_, err = io.Copy(outFile, inFile)
@@ -81,11 +77,11 @@ func Unzip(src string, dest string) ([]string, error) {
 		inFile.Close()
 
 		if err != nil {
-			return sourceFiles, err
+			return fmt.Errorf("failed to extract %s", file.Name)
 		}
 	}
 
-	return sourceFiles, nil
+	return nil
 }
 
 func ExecuteScriptFile(path string) (string, error) {
@@ -105,7 +101,7 @@ func ExecuteScriptFile(path string) (string, error) {
 	}
 }
 
-func ExecuteScript(script string) (string, error) {
+func ExecuteScript(script string) (string, string, error) {
 	cmd := exec.Command("bash", "-c", script)
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
@@ -114,9 +110,9 @@ func ExecuteScript(script string) (string, error) {
 
 	err := cmd.Run()
 	if err != nil {
-		return stderr.String(), err
+		return stdout.String(), stderr.String(), err
 	} else {
-		return stdout.String(), nil
+		return stdout.String(), stderr.String(), err
 	}
 }
 
@@ -148,40 +144,19 @@ func InitWorkspace(uploadDir string) {
 	}
 }
 
-func UnmarshalYamlFile(path string, out interface{}, varMap map[string]string) error {
-	file, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	readBytes, err := io.ReadAll(file)
-	for variable, value := range varMap {
-		readBytes = bytes.ReplaceAll(readBytes, []byte(variable), []byte(value))
-	}
-	if err != nil {
-		return err
-	}
-
-	err = yaml.Unmarshal(readBytes, out)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func EscapeNewLineHTML(input string) string {
-	return strings.Replace(input, "\n", "<br>", -1)
+func EscapeNewLineHTML(input string) template.HTML {
+	return template.HTML(strings.Replace(input, "\n", "<br />", -1))
 }
 
 func RetrieveFile(request *http.Request, fieldName string) (string, string, error) {
 	file, handle, err := request.FormFile(fieldName)
 	if err != nil {
-		return "", "", errors.New("No file provided")
+		return "", "", errors.New("no file provided")
 	}
 	fileName := handle.Filename
 
 	defer file.Close()
-	tempDir, err := ioutil.TempDir("uploads", "")
+	tempDir, err := ioutil.TempDir(consts.Settings.UploadsPath, "")
 	if err != nil {
 		return "", "", err
 	}

@@ -38,10 +38,10 @@ func ParseJunitTests(suites []junit.Suite) (testResults []TestResult) {
 				points, _ = strconv.ParseFloat(nameAndPoints[len(nameAndPoints)-1], 64)
 			}
 
-			result := TestResult{Name: name, Passing: true, Err: Error{}, Points: points}
+			result := TestResult{Name: name, Passing: true, Points: points}
 			if test.Error != nil {
 				result.Passing = false
-				result.Err.Name = test.Error.Error()
+				result.Err.Details = strings.TrimSpace(test.Error.Error())
 				result.Points = 0
 			}
 

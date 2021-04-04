@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
     integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <style>
-    .collapsible {
+    .entry {
       background-color: #777;
       color: white;
       cursor: pointer;
@@ -22,7 +22,7 @@
     }
 
     .droppedDown,
-    .collapsible:hover {
+    .entry:hover {
       background-color: #555;
     }
 
@@ -57,6 +57,11 @@
       vertical-align: middle;
     }
 
+    h2,h3,h4,h5,h6 {
+      text-align: left;
+    }
+
+    button:focus {outline:0;}
   </style>
 </head>
 <body>
@@ -80,48 +85,43 @@
     <div class="row">
       <div class="col-lg-12 text-center">
         <h1>{{.PageTitle}}</h1>
-        {{if .Errors}}
-          {{range .Errors}}
-            <button type="button" class="collapsible">
-              <img src="https://img.shields.io/badge/-✘-red?style=for-the-badge" />
-              {{.Name}}
-            </button>
-            <div class="dropDownContent">
-              <p>
-                {{escapeNewLineHTML .Details}}
-              </p>
-            </div>
-          {{end}}
+        {{range .Errors}}
+          <button type="button" class="entry collapsible">
+            <img src="https://img.shields.io/badge/-✘-red?style=for-the-badge" />
+            {{.Name}}
+          </button>
+          <div class="dropDownContent">
+            <p>{{escapeNewLineHTML .Details}}</p>
+          </div>
         {{end}}
 
         {{range .Tasks}}
-            <h2>Task: {{.Name}}</h2>
+          <h2>Task {{.Name}}</h2>
           {{if .PassingBuild}}
             <h3>
               <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" />
             </h3>
+            {{if .BuildMessage}}
+              <button type="button" class="entry collapsible">Build output</button>
+              <div class="dropDownContent">
+                <p>{{escapeNewLineHTML .BuildMessage}}</p>
+              </div>
+            {{end}}
           {{else}}
             <h3>
               <img src="https://img.shields.io/badge/build-failing-red?style=for-the-badge" />
             </h3>
           {{end}}
 
-          <button type="button" class="collapsible">Build output</button>
-          <div class="dropDownContent">
-            <p>
-              {{escapeNewLineHTML .BuildMessage}}
-            </p>
-          </div>
-
           {{if .Errors}}
-            <h3>Errors</h3>
+            <h4>Errors</h4>
             {{range .Errors}}
-              <button type="button" class="collapsible">
-                <img src="https://img.shields.io/badge/-✔-brightgreen?style=for-the-badge" />
+              <button type="button" class="entry collapsible">
+                <img src="https://img.shields.io/badge/-✘-red?style=for-the-badge" />
                 {{.Name}}
               </button>
               <div class="dropDownContent">
-                {{escapeNewLineHTML .Details}}
+                <p>{{escapeNewLineHTML .Details}}</p>
               </div>
             {{end}}
           {{end}}
@@ -130,20 +130,18 @@
             <h2>Tests</h2>
             {{range .Tests}}
               {{if .Passing}}
-                <button type="button" class="collapsible">
+                <button type="button" class="entry">
                   <img src="https://img.shields.io/badge/-✔-brightgreen?style=for-the-badge" />
                   {{.Name}}
                 </button>
                 <div class="dropDownContent"></div>
               {{else}}
-                <button type="button" class="collapsible">
+                <button type="button" class="entry collapsible">
                   <img src="https://img.shields.io/badge/-✘-red?style=for-the-badge" />
                   {{.Name}}
                 </button>
                 <div class="dropDownContent">
-                  <p>
-                    {{escapeNewLineHTML .Err}}
-                  </p>
+                  <p>{{escapeNewLineHTML .Err.Details}}</p>
                 </div>
               {{end}}
             {{end}}
@@ -153,22 +151,18 @@
     </div>
   </div>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-    crossorigin="anonymous"></script>
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-    crossorigin="anonymous"></script>
+    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
-    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-    crossorigin="anonymous"></script>
-  <script defer>
-    var coll = document.getElementsByClassName( "collapsible" );
-    var i;
-    for ( i = 0; i < coll.length; i++ ) {
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  <script>
+    let coll = document.getElementsByClassName( "collapsible" );
+    for ( let i = 0; i < coll.length; i++ ) {
       coll[i].addEventListener( "click", function () {
-        console.log(13);
         this.classList.toggle( "droppedDown" );
         var content = this.nextElementSibling;
+        console.log( content )
         if ( content.style.maxHeight ) {
           content.style.maxHeight = null;
         } else {

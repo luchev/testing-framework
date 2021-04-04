@@ -4,8 +4,8 @@ import (
 	"github.com/luchev/dtf/structs/test"
 )
 
-// TaskResult represents a whole project with all tests
-type TaskResult struct {
+// Result represents a whole project with all tests
+type Result struct {
 	Name         string
 	PassingBuild bool
 	BuildMessage string

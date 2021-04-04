@@ -65,7 +65,7 @@ func (t *Task) MemoryLeakTest() test.TestResult {
 			c1 <- test.TestResult{
 				Name:    "Memory leak test",
 				Passing: false,
-				Err:     test.Error{Name: "Memory leak detected"},
+				Err:     test.Error{Name: "Memory leak detected", Details: "Memory leak detected"},
 				Points:  0,
 			}
 		}

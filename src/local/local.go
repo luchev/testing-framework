@@ -12,6 +12,7 @@ import (
 	"github.com/luchev/dtf/consts"
 	"github.com/luchev/dtf/structs/task"
 	"github.com/luchev/dtf/util"
+	"github.com/luchev/dtf/yaml"
 )
 
 type SuiteConfig struct {
@@ -23,7 +24,7 @@ type SuiteConfig struct {
 
 type TestSuiteResult struct {
 	StudentId map[string]string
-	Results   []task.TaskResult
+	Results   []task.Result
 }
 
 func TestProject(projectPath string, configName string) {
@@ -38,7 +39,7 @@ func TestProject(projectPath string, configName string) {
 	varMap := make(map[string]string)
 	varMap["${PROJECT_DIR}"], _ = filepath.Abs(tempDir)
 	varMap["${CONFIG_DIR}"], _ = filepath.Abs(filepath.Dir(configName))
-	err = util.UnmarshalYamlFile(configName, &suiteConfig, varMap)
+	err = yaml.UnmarshalYamlFile(configName, &suiteConfig, varMap)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,23 +54,23 @@ func TestProject(projectPath string, configName string) {
 		}
 	}
 
-	_, err = util.Unzip(filepath.Join(tempDir, fileName), tempDir)
+	err = util.Unzip(filepath.Join(tempDir, fileName), tempDir)
 	if err != nil {
 		log.Fatalf("Error extracting file %s: %s", filepath.Join(tempDir, fileName), err.Error())
 	}
 
-	out, err := util.ExecuteScript(suiteConfig.InitScript)
+	_, _, err = util.ExecuteScript(suiteConfig.InitScript)
 	if err != nil {
-		log.Fatal(err, out)
+		log.Fatal(err)
 	}
 
-	taskResults := make([]task.TaskResult, 0)
+	taskResults := make([]task.Result, 0)
 	for _, suiteTask := range suiteConfig.Tasks {
-		result := task.TaskResult{Name: suiteTask.Name, PassingBuild: true, BuildMessage: "", Errors: nil, Tests: nil, Points: 0}
-		out, err := util.ExecuteScript(suiteTask.InitScript)
+		result := task.Result{Name: suiteTask.Name, PassingBuild: true, BuildMessage: "", Errors: nil, Tests: nil, Points: 0}
+		stdout, _, err := util.ExecuteScript(suiteTask.InitScript)
 		if err != nil {
 			result.PassingBuild = false
-			result.BuildMessage = out
+			result.BuildMessage = stdout
 			taskResults = append(taskResults, result)
 			continue
 		}

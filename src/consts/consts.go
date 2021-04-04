@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/luchev/dtf/util"
+	"github.com/luchev/dtf/yaml"
 )
 
 // Flags specifies the different args
@@ -49,7 +49,7 @@ func initFlags() {
 }
 
 func initSettings() {
-	err := util.UnmarshalYamlFile(baseConfigPath, &Settings, nil)
+	err := yaml.UnmarshalYamlFile(baseConfigPath, &Settings, nil)
 	if err != nil {
 		log.Fatal(err)
 	}

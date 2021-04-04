@@ -15,16 +15,19 @@ studentIdOutputFormat: group,fn
 tasks:
   - name: "1"
     initScript: "
-      cd ${PROJECT_DIR}/1/;
-      if [ $? -ne 0 ]; then exit 1; fi;
+      cd ${PROJECT_DIR}/1/ 2>/dev/null;
+      if [ $? -ne 0 ]; then
+        echo >&2 'Failed to enter directory /1. Is the project structure correct?';
+        exit 1;
+      fi;
       
-      grep -Prl '^\\s*(int|void)\\s*main\\(.*\\)' . | xargs rm;
+      grep -Prl '^\\s*(int|void)\\s*main\\(.*\\)' . | xargs rm 2>/dev/null;
       for sourceFile in $(find . -type f); do
         sed -i 's/^.*<crtdbg.h>//g' $sourceFile;
         sed -i '1i #include <pollyfills.hpp>\n' $sourceFile;
       done;
       cp ${CONFIG_DIR}/unit_tests_1.cpp ${CONFIG_DIR}/pollyfills.* ${CONFIG_DIR}/catch_main.o ${CONFIG_DIR}/catch.hpp .;
-      g++ -std=c++17 -I . catch_main.o *.cpp -o ${PROJECT_DIR}/unit_tests_1;
+      g++ -std=c++17 -Wall -I . catch_main.o *.cpp -o ${PROJECT_DIR}/unit_tests_1;
     "
     testScript: "
       ${PROJECT_DIR}/unit_tests_1 -r junit;
@@ -35,16 +38,19 @@ tasks:
     memoryPoints: 0.8
   - name: "2"
     initScript: "
-      cd ${PROJECT_DIR}/2/;
-      if [ $? -ne 0 ]; then exit 1; fi;
+      cd ${PROJECT_DIR}/2/ 2>/dev/null;
+      if [ $? -ne 0 ]; then
+        echo >&2 'Failed to enter directory /2. Is the project structure correct?';
+        exit 1;
+      fi;
 
-      grep -Prl '^\\s*(int|void)\\s*main\\(.*\\)' . | xargs rm;
+      grep -Prl '^\\s*(int|void)\\s*main\\(.*\\)' . | xargs rm 2>/dev/null;
       for sourceFile in $(find . -type f); do
         sed -i 's/^.*<crtdbg.h>//g' $sourceFile;
         sed -i '1i #include <pollyfills.hpp>\n' $sourceFile;
       done;
       cp ${CONFIG_DIR}/unit_tests_2.cpp ${CONFIG_DIR}/pollyfills.* ${CONFIG_DIR}/catch_main.o ${CONFIG_DIR}/catch.hpp .;
-      g++ -std=c++17 -I . catch_main.o *.cpp -o ${PROJECT_DIR}/unit_tests_2;
+      g++ -std=c++17 -Wall -I . catch_main.o *.cpp -o ${PROJECT_DIR}/unit_tests_2;
     "
     testScript: "
       ${PROJECT_DIR}/unit_tests_2 -r junit;
