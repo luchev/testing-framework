@@ -7,7 +7,8 @@ import (
 
 // Response represents the data provided to a go html template to render test results
 type Response struct {
-	PageTitle string
-	Tasks     []task.Result
-	Errors    []test.Error
+	PageTitle       string
+	StudentIdentity map[string]string
+	Tasks           []task.Result
+	Errors          []test.Error
 }

@@ -85,6 +85,13 @@
     <div class="row">
       <div class="col-lg-12 text-center">
         <h1>{{.PageTitle}}</h1>
+        {{if .StudentIdentity}}
+          <h4>You are identified as</h4>
+          {{range $key, $value := .StudentIdentity}}
+            <h6 style="padding-left: 20px">{{$key}}: {{$value}}</h6>
+          {{end}}
+        {{end}}
+
         {{range .Errors}}
           <button type="button" class="entry collapsible">
             <img src="https://img.shields.io/badge/-✘-red?style=for-the-badge" />

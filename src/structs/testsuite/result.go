@@ -6,7 +6,6 @@ import (
 	"github.com/luchev/dtf/structs/task"
 	"github.com/luchev/dtf/structs/test"
 	"github.com/luchev/dtf/util"
-	"github.com/luchev/dtf/yaml"
 )
 
 type Result struct {
@@ -14,19 +13,8 @@ type Result struct {
 	Results   []task.Result
 }
 
-func TestProject(projectPath string, configName string) (*Result, *test.Error) {
-
-	varMap := make(map[string]string)
-	workDir := filepath.Dir(projectPath)
-	varMap["${PROJECT_DIR}"], _ = filepath.Abs(workDir)
-	varMap["${CONFIG_DIR}"], _ = filepath.Abs(filepath.Dir(configName))
-	var suiteConfig Config
-	err := yaml.UnmarshalYamlFile(configName, &suiteConfig, varMap)
-	if err != nil {
-		return nil, &test.Error{Name: "Invalid config"}
-	}
-
-	err = util.Unzip(projectPath, workDir)
+func TestProject(projectPath string, suiteConfig Config) (*Result, *test.Error) {
+	err := util.Unzip(projectPath, filepath.Dir(projectPath))
 	if err != nil {
 		return nil, &test.Error{Name: "Failed to extract project", Details: err.Error()}
 	}

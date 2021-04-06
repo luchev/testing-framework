@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -36,7 +37,11 @@ func SetupRoutes(port int) {
 }
 
 func handleTest(w http.ResponseWriter, r *http.Request) {
-	response := response.Response{PageTitle: "Invalid request", Tasks: nil, Errors: nil}
+	response := response.Response{
+		PageTitle:       "Invalid request",
+		StudentIdentity: make(map[string]string),
+	}
+
 	defer func() {
 		tmpl, _ := template.New("result.html").
 			Funcs(template.FuncMap{"escapeNewLineHTML": util.EscapeNewLineHTML}).
@@ -46,31 +51,34 @@ func handleTest(w http.ResponseWriter, r *http.Request) {
 
 	// Get file from form
 	r.ParseMultipartForm(10 << 20) // 10 MB files
-	config := r.FormValue("config")
+	configName := r.FormValue("config")
 	tempDir, fileName, err := util.RetrieveFile(r, "srcFile")
 	if err != nil {
 		response.Errors = append(response.Errors, test.Error{Name: "Failed upload", Details: err.Error()})
 		return
 	}
-	response.PageTitle = fileName
 	defer os.RemoveAll(tempDir)
+	response.PageTitle = fileName
 
-	testResult, testErr := testsuite.TestProject(filepath.Join(tempDir, fileName), config)
-	if testErr != nil {
-		response.Errors = append(response.Errors, *testErr)
-		return
+	config, err := testsuite.UnmarshalConfig(configName, filepath.Join(tempDir, fileName))
+	if err != nil {
+		response.Errors = append(response.Errors, test.Error{Name: "Invalid config"})
 	}
 
-	// studentIdRegex := regexp.MustCompile(suiteConfig.StudentIdRegex)
-	// match := studentIdRegex.FindStringSubmatch(fileName)
-	// studentIdMap := make(map[string]string)
-	// for i, name := range studentIdRegex.SubexpNames() {
-	// 	if i != 0 && name != "" {
-	// 		studentIdMap[name] = match[i]
-	// 	}
-	// }
+	testResult, testErr := testsuite.TestProject(filepath.Join(tempDir, fileName), config)
+	if testErr == nil {
+		response.Tasks = testResult.Results
+	} else {
+		response.Errors = append(response.Errors, *testErr)
+	}
 
-	response.Tasks = testResult.Results
+	studentIdRegex := regexp.MustCompile(config.StudentIdRegex)
+	match := studentIdRegex.FindStringSubmatch(fileName)
+	for i, name := range studentIdRegex.SubexpNames() {
+		if i != 0 && name != "" {
+			response.StudentIdentity[name] = match[i]
+		}
+	}
 }
 
 type IndexData struct {
