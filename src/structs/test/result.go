@@ -21,10 +21,11 @@ import (
 
 // TestResult represents a test with a name and an outcome
 type TestResult struct {
-	Name    string
-	Passing bool
-	Err     Error
-	Points  float64
+	Name     string
+	Passing  bool
+	Err      Error
+	Score    float64
+	MaxScore float64
 }
 
 func ParseJunitTests(suites []junit.Suite) (testResults []TestResult) {
@@ -38,11 +39,11 @@ func ParseJunitTests(suites []junit.Suite) (testResults []TestResult) {
 				points, _ = strconv.ParseFloat(nameAndPoints[len(nameAndPoints)-1], 64)
 			}
 
-			result := TestResult{Name: name, Passing: true, Points: points}
+			result := TestResult{Name: name, Passing: true, Score: points, MaxScore: points}
 			if test.Error != nil {
 				result.Passing = false
 				result.Err.Details = strings.TrimSpace(test.Error.Error())
-				result.Points = 0
+				result.Score = 0
 			}
 
 			testResults = append(testResults, result)
@@ -60,7 +61,7 @@ func RunTests(names []string, srcDir string) (results []TestResult) {
 				Name:    test,
 				Passing: false,
 				Err:     Error{Name: fmt.Sprintf("Failed to run %s with err: %s", test, err.Error())},
-				Points:  0,
+				Score:   0,
 			}
 			log.Printf("Failed to run %s: %s", test, err.Error())
 		}
@@ -86,7 +87,7 @@ func RunTest(srcDir string, testName string) (result TestResult, err error) {
 	// Should have exactly 1 test
 	for _, suite := range suites {
 		for _, test := range suite.Tests {
-			result = TestResult{Name: test.Name, Passing: true, Err: Error{}, Points: 0}
+			result = TestResult{Name: test.Name, Passing: true, Err: Error{}, Score: 0}
 			if test.Error != nil {
 				result.Passing = false
 				result.Err.Name = test.Error.Error()

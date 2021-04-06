@@ -139,13 +139,13 @@
               {{if .Passing}}
                 <button type="button" class="entry">
                   <img src="https://img.shields.io/badge/-✔-brightgreen?style=for-the-badge" />
-                  {{.Name}}
+                  {{.Name}} {{.Score}}/{{.MaxScore}}
                 </button>
                 <div class="dropDownContent"></div>
               {{else}}
                 <button type="button" class="entry collapsible">
                   <img src="https://img.shields.io/badge/-✘-red?style=for-the-badge" />
-                  {{.Name}}
+                  {{.Name}} {{.Score}}/{{.MaxScore}}
                 </button>
                 <div class="dropDownContent">
                   <p>{{escapeNewLineHTML .Err.Details}}</p>
@@ -156,6 +156,9 @@
         {{end}}
       </div>
     </div>
+  </div>
+  <div>
+    <p></p>
   </div>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
     integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

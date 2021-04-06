@@ -11,5 +11,5 @@ type Result struct {
 	BuildMessage string
 	Errors       []test.Error
 	Tests        []test.TestResult
-	Points       float64
+	Score        float64
 }

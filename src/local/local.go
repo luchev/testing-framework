@@ -66,7 +66,7 @@ func TestProject(projectPath string, configName string) {
 
 	taskResults := make([]task.Result, 0)
 	for _, suiteTask := range suiteConfig.Tasks {
-		result := task.Result{Name: suiteTask.Name, PassingBuild: true, BuildMessage: "", Errors: nil, Tests: nil, Points: 0}
+		result := task.Result{Name: suiteTask.Name, PassingBuild: true, BuildMessage: "", Errors: nil, Tests: nil, Score: 0}
 		stdout, _, err := util.ExecuteScript(suiteTask.InitScript)
 		if err != nil {
 			result.PassingBuild = false
@@ -79,7 +79,7 @@ func TestProject(projectPath string, configName string) {
 		result.Tests = append(result.Tests, testResults...)
 		result.Tests = append(result.Tests, suiteTask.MemoryLeakTest())
 		for _, t := range result.Tests {
-			result.Points += t.Points
+			result.Score += t.Score
 		}
 		taskResults = append(taskResults, result)
 	}
@@ -113,8 +113,8 @@ func outputCsv(result TestSuiteResult, config SuiteConfig) string {
 	resMap := make(map[string]CsvResult)
 	for _, res := range result.Results {
 		if len(res.Tests) > 0 {
-			memoryPoints := res.Tests[len(res.Tests)-1].Points
-			remainingPoints := res.Points - memoryPoints
+			memoryPoints := res.Tests[len(res.Tests)-1].Score
+			remainingPoints := res.Score - memoryPoints
 			resMap[res.Name] = CsvResult{memoryPoints, remainingPoints}
 		}
 	}

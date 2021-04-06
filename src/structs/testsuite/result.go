@@ -26,7 +26,7 @@ func TestProject(projectPath string, suiteConfig Config) (*Result, *test.Error) 
 
 	taskResults := make([]task.Result, 0)
 	for _, suiteTask := range suiteConfig.Tasks {
-		result := task.Result{Name: suiteTask.Name, PassingBuild: true, BuildMessage: "", Errors: nil, Tests: nil, Points: 0}
+		result := task.Result{Name: suiteTask.Name, PassingBuild: true, BuildMessage: "", Errors: nil, Tests: nil, Score: 0}
 		_, stderr, err := util.ExecuteScript(suiteTask.InitScript)
 		if err != nil {
 			result.PassingBuild = false
@@ -40,7 +40,7 @@ func TestProject(projectPath string, suiteConfig Config) (*Result, *test.Error) 
 		result.Tests = append(result.Tests, testResults...)
 		result.Tests = append(result.Tests, suiteTask.MemoryLeakTest())
 		for _, t := range result.Tests {
-			result.Points += t.Points
+			result.Score += t.Score
 		}
 		taskResults = append(taskResults, result)
 	}

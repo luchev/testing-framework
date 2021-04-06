@@ -38,10 +38,11 @@ func (t *Task) RunTestScript() []test.TestResult {
 	case <-time.After(1 * time.Minute):
 		return []test.TestResult{
 			{
-				Name:    "Execution timed out",
-				Passing: false,
-				Err:     test.Error{Name: "Program execution timed out"},
-				Points:  0,
+				Name:     "Execution timed out",
+				Passing:  false,
+				Err:      test.Error{Name: "Program execution timed out"},
+				Score:    0,
+				MaxScore: 0,
 			},
 		}
 	}
@@ -59,14 +60,16 @@ func (t *Task) MemoryLeakTest() test.TestResult {
 			c1 <- test.TestResult{
 				Name:    "Memory leak test",
 				Passing: true, Err: test.Error{},
-				Points: t.MemoryPoints,
+				Score:    t.MemoryPoints,
+				MaxScore: t.MemoryPoints,
 			}
 		} else {
 			c1 <- test.TestResult{
-				Name:    "Memory leak test",
-				Passing: false,
-				Err:     test.Error{Name: "Memory leak detected", Details: "Memory leak detected"},
-				Points:  0,
+				Name:     "Memory leak test",
+				Passing:  false,
+				Err:      test.Error{Name: "Memory leak detected", Details: "Memory leak detected"},
+				Score:    0,
+				MaxScore: t.MemoryPoints,
 			}
 		}
 	}()
@@ -76,10 +79,11 @@ func (t *Task) MemoryLeakTest() test.TestResult {
 		return res
 	case <-time.After(1 * time.Minute):
 		return test.TestResult{
-			Name:    "Memory leak test",
-			Passing: false,
-			Err:     test.Error{Name: "Program execution timed out"},
-			Points:  0,
+			Name:     "Memory leak test",
+			Passing:  false,
+			Err:      test.Error{Name: "Program execution timed out"},
+			Score:    0,
+			MaxScore: t.MemoryPoints,
 		}
 	}
 }
