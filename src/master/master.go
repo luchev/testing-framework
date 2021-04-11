@@ -86,9 +86,16 @@ func handleTest(w http.ResponseWriter, r *http.Request) {
 
 	studentIdRegex := regexp.MustCompile(config.StudentIdRegex)
 	match := studentIdRegex.FindStringSubmatch(fileName)
-	for i, name := range studentIdRegex.SubexpNames() {
-		if i != 0 && name != "" {
-			response.StudentIdentity[name] = match[i]
+	if len(match) == 0 {
+		response.Errors = append(response.Errors, test.Error{
+			Name:    "Incorrect archive name",
+			Details: "Failed to identity from archive name",
+		})
+	} else {
+		for i, name := range studentIdRegex.SubexpNames() {
+			if i != 0 && name != "" {
+				response.StudentIdentity[name] = match[i]
+			}
 		}
 	}
 }
