@@ -38,7 +38,9 @@ func TestProject(projectPath string, suiteConfig Config) (*Result, *test.Error) 
 		result.BuildMessage = stderr
 		testResults := suiteTask.RunTestScript()
 		result.Tests = append(result.Tests, testResults...)
-		result.Tests = append(result.Tests, suiteTask.MemoryLeakTest())
+		if suiteTask.MemoryPoints > 0 {
+			result.Tests = append(result.Tests, suiteTask.MemoryLeakTest())
+		}
 		for _, t := range result.Tests {
 			result.Score += t.Score
 		}

@@ -135,17 +135,18 @@
 
           {{if .Tests}}
             <h2>Tests</h2>
+            <h5>Total score: {{printf "%.2f" .Score}}</h5>
             {{range .Tests}}
               {{if .Passing}}
                 <button type="button" class="entry">
                   <img src="https://img.shields.io/badge/-✔-brightgreen?style=for-the-badge" />
-                  {{.Name}} {{.Score}}/{{.MaxScore}}
+                  {{.Name}} {{printf "%.2f" .Score}}/{{printf "%.2f" .MaxScore}}
                 </button>
                 <div class="dropDownContent"></div>
               {{else}}
                 <button type="button" class="entry collapsible">
                   <img src="https://img.shields.io/badge/-✘-red?style=for-the-badge" />
-                  {{.Name}} {{.Score}}/{{.MaxScore}}
+                  {{.Name}} {{printf "%.2f" .Score}}/{{printf "%.2f" .MaxScore}}
                 </button>
                 <div class="dropDownContent">
                   <p>{{escapeNewLineHTML .Err.Details}}</p>
