@@ -13,11 +13,17 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/luchev/dtf/consts"
+	"github.com/luchev/dtf/structs/iplimiter"
 	"github.com/luchev/dtf/structs/response"
 	"github.com/luchev/dtf/structs/test"
 	"github.com/luchev/dtf/structs/testsuite"
 	"github.com/luchev/dtf/util"
+	"golang.org/x/time/rate"
 )
+
+var requestLimit = 2
+var requestRefreshTime = rate.Every(60 * time.Minute)
+var limiter = iplimiter.NewIPRateLimiter(requestRefreshTime, requestLimit)
 
 func SetupRoutes(port int) {
 	log.Printf("Initializing Master server routes")
@@ -37,6 +43,12 @@ func SetupRoutes(port int) {
 }
 
 func handleTest(w http.ResponseWriter, r *http.Request) {
+	limiter := limiter.GetLimiter(r.RemoteAddr)
+	if !limiter.Allow() {
+		http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
+		return
+	}
+
 	response := response.Response{
 		PageTitle:       "Invalid request",
 		StudentIdentity: make(map[string]string),
