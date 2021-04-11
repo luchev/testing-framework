@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -43,7 +44,12 @@ func SetupRoutes(port int) {
 }
 
 func handleTest(w http.ResponseWriter, r *http.Request) {
-	limiter := limiter.GetLimiter(r.RemoteAddr)
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		http.Error(w, "Invalid Requester IP", http.StatusUnauthorized)
+		return
+	}
+	limiter := limiter.GetLimiter(ip)
 	if !limiter.Allow() {
 		http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
 		return
