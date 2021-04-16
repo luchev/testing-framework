@@ -27,8 +27,21 @@ func (t *Task) RunTestScript() []test.TestResult {
 		cmd.Stderr = &stderr
 
 		cmd.Run()
-
-		suites, _ := junit.Ingest(stdout.Bytes())
+		suites, err := junit.Ingest(stdout.Bytes())
+		if err != nil {
+			result := test.TestResult{
+				Name: "Runtime error",
+				Err: test.Error{
+					Name:    "Runtime error",
+					Details: stderr.String(),
+				},
+				Passing:  false,
+				Score:    0,
+				MaxScore: 0,
+			}
+			c1 <- []test.TestResult{result}
+			return
+		}
 		c1 <- test.ParseJunitTests(suites)
 	}()
 

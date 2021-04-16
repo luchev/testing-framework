@@ -84,23 +84,6 @@ func Unzip(src string, dest string) error {
 	return nil
 }
 
-func ExecuteScriptFile(path string) (string, error) {
-	base := filepath.Base(path)
-	dir := filepath.Dir(path)
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("cd %s; ./%s", dir, base))
-	var stdout bytes.Buffer
-	cmd.Stdout = &stdout
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-
-	err := cmd.Run()
-	if err != nil {
-		return stderr.String(), err
-	} else {
-		return stdout.String(), nil
-	}
-}
-
 func ExecuteScript(script string) (string, string, error) {
 	cmd := exec.Command("bash", "-c", script)
 	var stdout bytes.Buffer
