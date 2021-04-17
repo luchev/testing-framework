@@ -11,16 +11,9 @@ import (
 
 	"github.com/luchev/dtf/consts"
 	"github.com/luchev/dtf/structs/task"
+	"github.com/luchev/dtf/structs/testsuite"
 	"github.com/luchev/dtf/util"
-	"github.com/luchev/dtf/yaml"
 )
-
-type SuiteConfig struct {
-	InitScript            string      `yaml:"initScript"`
-	Tasks                 []task.Task `yaml:"tasks"`
-	StudentIdRegex        string      `yaml:"studentIdRegex"`
-	StudentIdOutputFormat string      `yaml:"studentIdOutputFormat"`
-}
 
 type TestSuiteResult struct {
 	StudentId map[string]string
@@ -28,68 +21,41 @@ type TestSuiteResult struct {
 }
 
 func TestProject(projectPath string, configName string) {
-	suiteConfig := SuiteConfig{}
-
 	tempDir, fileName, err := util.RetrieveLocalFile(projectPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer os.RemoveAll(tempDir)
 
-	varMap := make(map[string]string)
-	varMap["${PROJECT_DIR}"], _ = filepath.Abs(tempDir)
-	varMap["${CONFIG_DIR}"], _ = filepath.Abs(filepath.Dir(configName))
-	err = yaml.UnmarshalYamlFile(configName, &suiteConfig, varMap)
+	config, err := testsuite.UnmarshalConfig(configName, filepath.Join(tempDir, fileName))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Invalid config %s: %s", configName, err)
 	}
 
-	studentId := filepath.Base(projectPath)
-	studentIdRegex := regexp.MustCompile(suiteConfig.StudentIdRegex)
-	match := studentIdRegex.FindStringSubmatch(studentId)
 	studentIdMap := make(map[string]string)
-	for i, name := range studentIdRegex.SubexpNames() {
-		if i != 0 && name != "" {
-			studentIdMap[name] = match[i]
+	studentIdRegex := regexp.MustCompile(config.StudentIdRegex)
+	match := studentIdRegex.FindStringSubmatch(fileName)
+	if len(match) == 0 {
+		log.Fatalf("Incorrect archive name %s", fileName)
+	} else {
+		for i, name := range studentIdRegex.SubexpNames() {
+			if i != 0 && name != "" {
+				studentIdMap[name] = match[i]
+			}
 		}
 	}
 
-	err = util.Unzip(filepath.Join(tempDir, fileName), tempDir)
-	if err != nil {
-		log.Fatalf("Error extracting file %s: %s", filepath.Join(tempDir, fileName), err.Error())
+	testResult, testErr := testsuite.TestProject(filepath.Join(tempDir, fileName), config)
+	if testErr != nil {
+		log.Fatal("Error running tests: ", testErr.Name)
 	}
 
-	_, _, err = util.ExecuteScript(suiteConfig.InitScript)
-	if err != nil {
-		log.Fatal(err)
-	}
+	suiteResult := TestSuiteResult{StudentId: studentIdMap, Results: testResult.Results}
 
-	taskResults := make([]task.Result, 0)
-	for _, suiteTask := range suiteConfig.Tasks {
-		result := task.Result{Name: suiteTask.Name, PassingBuild: true, BuildMessage: "", Errors: nil, Tests: nil, Score: 0}
-		stdout, _, err := util.ExecuteScript(suiteTask.InitScript)
-		if err != nil {
-			result.PassingBuild = false
-			result.BuildMessage = stdout
-			taskResults = append(taskResults, result)
-			continue
-		}
-
-		testResults := suiteTask.RunTestScript()
-		result.Tests = append(result.Tests, testResults...)
-		result.Tests = append(result.Tests, suiteTask.MemoryLeakTest())
-		for _, t := range result.Tests {
-			result.Score += t.Score
-		}
-		taskResults = append(taskResults, result)
-	}
-
-	suiteResult := TestSuiteResult{StudentId: studentIdMap, Results: taskResults}
-
-	outputTestSuiteResult(suiteResult, suiteConfig)
+	outputTestSuiteResult(suiteResult, config)
 }
 
-func outputTestSuiteResult(result TestSuiteResult, config SuiteConfig) {
+func outputTestSuiteResult(result TestSuiteResult, config testsuite.Config) {
 	if consts.Flags.OutFormat == "json" {
 		fmt.Println(outputJson(result, config))
 	} else if consts.Flags.OutFormat == "csv" {
@@ -99,23 +65,16 @@ func outputTestSuiteResult(result TestSuiteResult, config SuiteConfig) {
 	}
 }
 
-func outputJson(result TestSuiteResult, config SuiteConfig) string {
+func outputJson(result TestSuiteResult, config testsuite.Config) string {
 	out, _ := json.MarshalIndent(result, "", "    ")
 	return string(out)
 }
 
-type CsvResult struct {
-	memory float64
-	total  float64
-}
-
-func outputCsv(result TestSuiteResult, config SuiteConfig) string {
-	resMap := make(map[string]CsvResult)
+func outputCsv(result TestSuiteResult, config testsuite.Config) string {
+	resMap := make(map[string]float64)
 	for _, res := range result.Results {
 		if len(res.Tests) > 0 {
-			memoryPoints := res.Tests[len(res.Tests)-1].Score
-			remainingPoints := res.Score - memoryPoints
-			resMap[res.Name] = CsvResult{memoryPoints, remainingPoints}
+			resMap[res.Name] = res.Score
 		}
 	}
 
@@ -123,8 +82,7 @@ func outputCsv(result TestSuiteResult, config SuiteConfig) string {
 	for _, t := range config.Tasks {
 		res, ok := resMap[t.Name]
 		if ok {
-			csvOutput = append(csvOutput,
-				fmt.Sprintf("%.2f", res.memory), fmt.Sprintf("%.2f", res.total))
+			csvOutput = append(csvOutput, fmt.Sprintf("%.2f", res))
 		} else {
 			csvOutput = append(csvOutput, "0", "0")
 		}
