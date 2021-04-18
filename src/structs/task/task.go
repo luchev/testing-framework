@@ -42,7 +42,22 @@ func (t *Task) RunTestScript() []test.TestResult {
 			c1 <- []test.TestResult{result}
 			return
 		}
-		c1 <- test.ParseJunitTests(suites)
+
+		testResults := test.ParseJunitTests(suites)
+		if stderr.Len() > 0 {
+			testResults = append(testResults, test.TestResult{
+				Name: "Runtime error",
+				Err: test.Error{
+					Name:    "Runtime error",
+					Details: stderr.String(),
+				},
+				Passing:  false,
+				Score:    0,
+				MaxScore: 0,
+			})
+		}
+
+		c1 <- testResults
 	}()
 
 	select {
