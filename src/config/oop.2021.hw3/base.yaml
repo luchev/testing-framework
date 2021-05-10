@@ -1,0 +1,61 @@
+initScript: "
+    cd ${CONFIG_DIR};
+    if [ $? -ne 0 ]; then exit 1; fi;
+
+    if ! test -f 'catch.hpp' ; then
+        wget https://github.com/catchorg/Catch2/releases/download/v2.13.4/catch.hpp;
+    fi;
+
+    if ! test -f 'catch_main.o' ; then
+        g++ -std=c++17 -c -I . catch_main.cpp -o catch_main.o;
+    fi;
+  "
+studentIdRegex: .*?(?P<group>\d+)_(?P<fn>\d+)\.zip
+studentIdOutputFormat: group,fn
+tasks:
+  - name: "1"
+    initScript: "
+      cd ${PROJECT_DIR}/1/ 2>/dev/null;
+      if [ $? -ne 0 ]; then
+        echo >&2 'Failed to enter directory /1. Is the project structure correct?';
+        exit 1;
+      fi;
+      
+      grep -Prl '^\\s*(int|void)\\s*main\\(.*\\)' . | xargs rm 2>/dev/null;
+      for sourceFile in $(find . -type f); do
+        sed -i 's/^.*<crtdbg.h>//g' $sourceFile;
+        sed -i '1i #include <pollyfills.hpp>\n' $sourceFile;
+      done;
+      cp ${CONFIG_DIR}/unit_tests_1.cpp ${CONFIG_DIR}/pollyfills.* ${CONFIG_DIR}/catch_main.o ${CONFIG_DIR}/catch.hpp .;
+      g++ -std=c++17 -Wall -I . catch_main.o *.cpp -o ${PROJECT_DIR}/unit_tests_1;
+    "
+    testScript: "
+      timeout 15s ${PROJECT_DIR}/unit_tests_1 -r junit;
+    "
+    memoryScript: "
+      exit 0;
+    "
+    memoryPoints: 0
+  - name: "2"
+    initScript: "
+      cd ${PROJECT_DIR}/2/ 2>/dev/null;
+      if [ $? -ne 0 ]; then
+        echo >&2 'Failed to enter directory /2. Is the project structure correct?';
+        exit 1;
+      fi;
+
+      grep -Prl '^\\s*(int|void)\\s*main\\(.*\\)' . | xargs rm 2>/dev/null;
+      for sourceFile in $(find . -type f); do
+        sed -i 's/^.*<crtdbg.h>//g' $sourceFile;
+        sed -i '1i #include <pollyfills.hpp>\n' $sourceFile;
+      done;
+      cp ${CONFIG_DIR}/unit_tests_2.cpp ${CONFIG_DIR}/pollyfills.* ${CONFIG_DIR}/catch_main.o ${CONFIG_DIR}/catch.hpp .;
+      g++ -std=c++17 -Wall -I . catch_main.o *.cpp -o ${PROJECT_DIR}/unit_tests_2;
+    "
+    testScript: "
+      timeout 15s ${PROJECT_DIR}/unit_tests_2 -r junit;
+    "
+    memoryScript: "
+      exit 0;
+    "
+    memoryPoints: 0
