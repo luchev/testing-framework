@@ -84,7 +84,7 @@ func outputCsv(result TestSuiteResult, config testsuite.Config) string {
 		if ok {
 			csvOutput = append(csvOutput, fmt.Sprintf("%.2f", res))
 		} else {
-			csvOutput = append(csvOutput, "0", "0")
+			csvOutput = append(csvOutput, "0.00")
 		}
 	}
 
